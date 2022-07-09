@@ -1,22 +1,22 @@
-import socket 
+import cv2
+import socket
+from traceback import print_tb 
 from config import *
+import pyautogui
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    # s.sendall(b'Hello, World!')
+SCREEN_SIZE = tuple(pyautogui.size())
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi', fourcc, 20.0, (SCREEN_SIZE))
+
+
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+    client.connect((HOST, PORT))
+    # client.sendall(b'Hello, World!')
     while True:
-        data = input("Enter You Message: ")
-        if data == "BREAK":
-            data = data.encode(FORMAT)
-            s.sendall(data)
-            print("Ending The Connection!")
-            break
-        data = data.encode(FORMAT)
-        s.sendall(data)
-        data = s.recv(1024)
-        data = data.decode(FORMAT)
-        if data == 'BREAK':
-            print('Connection Closed')
-            break
-        else:
-            print(data)
+        msg_length = int(client.recv(HEADER).decode(FORMAT))
+        if msg_length:
+            msg = client.recv(msg_length).decode(FORMAT)
+            if msg == BREAK_CONNECTION:
+                connected = False
+            out.write(msg)
